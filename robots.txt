@@ -1,0 +1,9 @@
+# ======================================================
+# Robots.txt for Blueverse Mobile Games Site
+# ======================================================
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://money.blueverse.space/sitemap.xml
