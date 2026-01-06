@@ -4,7 +4,7 @@
   <!-- Section Homepage -->
   <url>
     <loc>https://money.blueverse.space/digital/all.html</loc>
-    <lastmod>2026-01-03</lastmod>
+    <lastmod>2026-01-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -36,6 +36,17 @@
 
 
 
+ <!-- 6 jan to 6 feb -->  
+
+
+
+
+<url>
+    <loc>https://money.blueverse.space/digital/cash-reward.html</loc>
+    <lastmod>2026-01-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 
 
 
