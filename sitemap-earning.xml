@@ -4,7 +4,7 @@
   <!-- Section Homepage -->
   <url>
     <loc>https://money.blueverse.space/earning/all.html</loc>
-    <lastmod>2026-01-03</lastmod>
+    <lastmod>2026-01-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -38,11 +38,16 @@
 
 
 
-
+ <!--7 Jan to 7 Feb--> 
 
 
  
- 
+ <url>
+    <loc>https://money.blueverse.space/earning/online-earning-skills.html</loc>
+    <lastmod>2026-01-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
 
  
  
