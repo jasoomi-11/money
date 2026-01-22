@@ -632,7 +632,224 @@ body {
   
 
 
+<!-- ================== AD CONTAINER ================== -->
+<div id="adContainer">
+  <div id="timer" class="waiting">⏳ Verifying...</div>
+  <div id="progressBar">
+    <div id="progress"></div>
+  </div>
+  <button id="adBtn" disabled>Continue</button>
+</div>
 
+<style>
+#adContainer{
+  max-width:420px;
+  margin:50px auto;
+  padding:24px;
+  background:linear-gradient(135deg,#1e3a8a,#2563eb);
+  border-radius:18px;
+  box-shadow:0 15px 35px rgba(0,0,0,.45);
+  text-align:center;
+  font-family:Segoe UI,system-ui;
+  color:#fff;
+}
+#timer{
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:14px;
+  color:#c7d2fe;
+}
+#progressBar{
+  width:100%;
+  height:8px;
+  background:#94a3b8;
+  border-radius:6px;
+  overflow:hidden;
+  margin-bottom:18px;
+}
+#progress{
+  width:0%;
+  height:100%;
+  background:#22c55e;
+  transition:width 1s linear;
+}
+#adBtn{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  font-weight:700;
+  border:none;
+  border-radius:14px;
+  background:#22c55e;
+  color:#000;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+  transition:.3s;
+}
+#adBtn:hover:not(:disabled){
+  background:#16a34a;
+  transform:translateY(-2px);
+}
+#adBtn:disabled{
+  background:#94a3b8;
+  cursor:not-allowed;
+}
+@keyframes pulse{
+  0%{opacity:.6}
+  50%{opacity:1}
+  100%{opacity:.6}
+}
+.waiting{
+  animation:pulse 1s infinite;
+}
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* SETTINGS */
+const COUNTDOWN = 5;
+const PLATFORM_EARNING = 0.0005;
+const DAILY_LIMIT = 120;
+const JSON_FILES = ["1.json","2.json","3.json"];
+
+/* UI */
+const btn = document.getElementById("adBtn");
+const timer = document.getElementById("timer");
+const progress = document.getElementById("progress");
+
+/* URL PARAMS */
+const params = new URLSearchParams(window.location.search);
+const uidParam = params.get("uid");
+const tokenParam = params.get("token");
+
+if (!uidParam || !tokenParam) {
+  btn.disabled = true;
+  timer.innerText = "Invalid access";
+  throw new Error("Missing uid or token");
+}
+
+/* GET NEXT UNUSED LINK */
+async function getNextLink(userData){
+  for (let file of JSON_FILES){
+    try{
+      const res = await fetch(file,{cache:"no-store"});
+      const data = await res.json();
+      const unused = data.filter(l => !userData.usedLinks?.includes(l));
+      if(unused.length) return unused[0];
+    }catch(e){console.error(e);}
+  }
+  return null;
+}
+
+/* MAIN FUNCTION */
+async function init() {
+  btn.disabled = true;
+  timer.innerText = "⏳ Verifying...";
+
+  const userRef = doc(db,"users",uidParam);
+  const snap = await getDoc(userRef);
+  if(!snap.exists()){
+    timer.innerText = "Unauthorized";
+    return;
+  }
+
+  let userData = snap.data();
+  const today = new Date().toISOString().slice(0,10);
+
+  /* DAILY RESET */
+  if(userData.tasksDate !== today){
+    await updateDoc(userRef,{
+      tasksDate: today,
+      todayClicks: 0,
+      usedTokens: [],
+      usedLinks: [],
+      lockedUntil: null
+    });
+    userData.todayClicks = 0;
+    userData.usedTokens = [];
+    userData.usedLinks = [];
+    userData.lockedUntil = null;
+  }
+
+  /* LOCK CHECK */
+  if(userData.lockedUntil === today){
+    btn.disabled = true;
+    timer.innerText = "Come back tomorrow";
+    return;
+  }
+
+  /* TOKEN CHECK */
+  if(userData.usedTokens?.includes(tokenParam)){
+    btn.disabled = true;
+    timer.innerText = "Already completed";
+    return;
+  }
+
+  /* DAILY LIMIT */
+  if(userData.todayClicks >= DAILY_LIMIT){
+    btn.disabled = true;
+    timer.innerText = "Daily limit reached";
+    return;
+  }
+
+  /* GET LINK */
+  const nextLink = await getNextLink(userData);
+  if(!nextLink){
+    btn.disabled = true;
+    timer.innerText = "No links available";
+    return;
+  }
+
+  /* COUNTDOWN */
+  let sec = COUNTDOWN;
+  progress.style.width = "0%";
+  timer.innerText = `⏳ Available in ${sec}s`;
+
+  const interval = setInterval(()=>{
+    sec--;
+    timer.innerText = `⏳ Available in ${sec}s`;
+    progress.style.width = `${((COUNTDOWN-sec)/COUNTDOWN)*100}%`;
+    if(sec <= 0){
+      clearInterval(interval);
+      timer.innerText = "Click to continue";
+      btn.disabled = false;
+    }
+  },1000);
+
+  /* CLICK HANDLER */
+  btn.onclick = async () => {
+    btn.disabled = true;
+    timer.innerText = "Redirecting...";
+
+    // Update Firestore first
+    await updateDoc(userRef,{
+      usedTokens: arrayUnion(tokenParam),
+      usedLinks: arrayUnion(nextLink),
+      totalClicks: increment(1),
+      todayClicks: increment(1),
+      totalEarnings: increment(PLATFORM_EARNING),
+      lockedUntil: today
+    });
+
+    // Redirect to link
+    const redirectUrl = nextLink + `?uid=${uidParam}&token=${btoa(crypto.randomUUID()+"|"+Date.now())}`;
+    window.location.href = redirectUrl;
+  };
+}
+
+init();
+</script>
 
 
 
@@ -646,6 +863,13 @@ body {
     <div class="guides-grid" id="guidesContainer"></div>
 
 </section>
+
+
+
+
+
+
+
 
 
 
