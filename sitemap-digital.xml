@@ -4,7 +4,7 @@
   <!-- Section Homepage -->
   <url>
     <loc>https://money.blueverse.space/digital/all.html</loc>
-    <lastmod>2026-01-06</lastmod>
+    <lastmod>2026-01-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -51,7 +51,17 @@
 
 
 
+ <!-- 28 jan to 28 feb -->  
 
+
+
+
+<url>
+    <loc>https://money.blueverse.space/digital/top-10-digital-wallets.html</loc>
+    <lastmod>2026-01-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
  
  
 
